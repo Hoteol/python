@@ -21,4 +21,5 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('', blogapp.views.home, name='home'),
     path('new/', blogapp.views.new, name='new'),
+    path('detail/<int:blog_id>/', blogapp.views.detail, name='detail'),
 ]
