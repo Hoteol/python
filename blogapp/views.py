@@ -1,5 +1,6 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.utils import timezone
+from django.core.paginator import Paginator
 from .models import Blog
 from .forms import BlogUpdate
 
@@ -7,7 +8,12 @@ from .forms import BlogUpdate
 
 def home(request):
     blogs = Blog.objects.order_by('-id')
-    return render(request, 'home.html', {'blogs':blogs})
+    blog_list = Blog.objects.all().order_by('-id')
+    paginator = Paginator(blog_list,3)
+    page = request.GET.get('page')
+    posts = paginator.get_page(page)
+
+    return render(request,'home.html', {'blogs':blogs,'posts':posts} )
 
 def detail(request, blog_id):
     blog_detail = get_object_or_404(Blog, pk=blog_id)
@@ -18,8 +24,9 @@ def create(request):
 
 def postcreate(request):
     blog = Blog()
-    blog.title = request.GET['title']
-    blog.body = request.GET['body']
+    blog.title = request.POST['title']
+    blog.body = request.POST['body']
+    blog.images = request.FILES['images']
     blog.pub_date = timezone.datetime.now()
     blog.save()
     return redirect('/blogapp/detail/'+str(blog.id))
@@ -62,3 +69,15 @@ def new(request):
 
 
     return render(request, 'new.html', {'fulltext': full_text, 'total':len(word_list), 'dictionary':word_dictionary.items() })
+
+def search(request):
+    blogs = Blog.objects.all().order_by('-id')
+
+    q = request.POST.get('q',"")
+
+    if q:
+        blogs = blogs.filter(title__icontains=q)
+        return render(request, 'search.html', {'blogs':blogs, 'q':q})
+
+    else:
+        return render(request, 'search.html')
